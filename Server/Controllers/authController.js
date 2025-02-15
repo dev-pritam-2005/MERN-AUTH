@@ -10,19 +10,22 @@ export const register = async (req, res) => {
     }
 
     try {
+        console.log("Password before hashing:", password);
+        console.log("Type of password:", typeof password);
+
         const existingUser = await userModel.findOne({ email });
 
         if (existingUser) {
             return res.json({ success: false, message: 'Email already exists' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // ✅ Ensure password is a string
+        const hashedPassword = await bcrypt.hash(String(password), 10);
 
         const user = new userModel({ name, email, password: hashedPassword });
 
         await user.save();
 
-        // ✅ Fix the typo: expiresIn (not expiresIN)
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         res.cookie('token', token, {
@@ -33,11 +36,11 @@ export const register = async (req, res) => {
         });
 
         return res.json({ success: true });
-        
     } catch (error) {
         return res.json({ success: false, message: error.message });
     }
 };
+
 
 // export const register = async (req , res)=>{
 //     const {name, email, password} = req.body;
